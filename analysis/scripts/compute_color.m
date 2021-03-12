@@ -45,5 +45,5 @@ for cIm=1:length(names)
     
 end
 
-% Save saliency matrix that contains all the images
+% Save color matrix that contains all the images
 save([out_path, 'color_maps.mat'], 'col_mat')
