@@ -1,4 +1,4 @@
-function [a,b,c,d,Probabc,Probab,Probbc,Proba,Probc]=DistanceVariationPartition(Y,X,W,NumberPermutations,draw_venn);
+function [a,b,c,d,Probabc,Probab,Probbc,Proba,Probc]=DistanceVariationPartition(Y,X,W,NumberPermutations,draw_venn)
 % DistanceVariationPartitioning: performs a variation partitioning on a distance matrix (or similarity) Y
 % based on two data distance matrices X and W. Tests of significance on fractions are performed by permutation.
 % input:
@@ -19,24 +19,24 @@ function [a,b,c,d,Probabc,Probab,Probbc,Proba,Probc]=DistanceVariationPartition(
 %               Dissecting Amazonian biodiversity. Science 269: 63-66.
 % author: Pedro Peres-Neto, May 2005 (pedro.peres-neto@uregina.ca)
 
+% Get number of columns and rows
 NumberColumns=size(Y,1);
+NumberRows=NumberColumns*(NumberColumns-1)/2;
 
 % Place distance matrices into a vector
-% Check if NaNs in one of the models
 YVector=Y(find(~triu(ones(NumberColumns))));
 XVector=X(find(~triu(ones(NumberColumns))));
 WVector=W(find(~triu(ones(NumberColumns))));
 
-NumberRows=NumberColumns*(NumberColumns-1)/2;
-
-% if max(max(isnan(X)))~=0 || max(max(isnan(W)))~=0
-%     NaN_ind=isnan(WVector);
-%     NumberColumns=NumberColumns-5;
-%     YVector(NaN_ind)=[];
-%     XVector(NaN_ind)=[];
-%     WVector(NaN_ind)=[];
-%     NumberRows=length(YVector);
-% end
+% Check if NaNs in one of the models
+if max(max(isnan(X)))~=0 || max(max(isnan(W)))~=0
+    NaN_ind=isnan(WVector);
+    NumberColumns=NumberColumns-5;
+    YVector(NaN_ind)=[];
+    XVector(NaN_ind)=[];
+    WVector(NaN_ind)=[];
+    NumberRows=length(YVector);
+end
 
 % Center vector of distances
 YVector=YVector-ones(NumberRows,1)*mean(YVector);
@@ -134,7 +134,7 @@ for i=1:NumberPermutations-1
     % Difference
     a_minus_c(i)=ab_p(i)-bc_p(i);
     
-end;
+end
 'Done'
 
 % Manual pval
@@ -148,24 +148,24 @@ Probc=Probc/NumberPermutations;
 % Comptue SE (SD/sqrt(N)) Boner and Epstein
 
 % Signrank
-[p_val_ab,h,stats]=signrank(ab_p, a);
-[p_val_bc,h,stats]=signrank(bc_p, c);
-
-
-% Include labels in the plot
-if draw_venn
-    for i = 1:3
-        if i==1
-            t=a;
-        elseif i==2
-            t=c;
-        elseif i==3
-            t=b;
-        end
-        
-        text(S.ZoneCentroid(i,1), S.ZoneCentroid(i,2), num2str(round(t,3)))
-    end
-end
+% [p_val_ab,h,stats]=signrank(ab_p, a);
+% [p_val_bc,h,stats]=signrank(bc_p, c);
+% 
+% 
+% % Include labels in the plot
+% if draw_venn
+%     for i = 1:3
+%         if i==1
+%             t=a;
+%         elseif i==2
+%             t=c;
+%         elseif i==3
+%             t=b;
+%         end
+%         
+%         text(S.ZoneCentroid(i,1), S.ZoneCentroid(i,2), num2str(round(t,3)))
+%     end
+% end
 
 
 % subplot(1,3,1), k=histogram(ab_p);hold on; line([FabObs FabObs],[0 max(k.Values)], 'col', 'r')
