@@ -1,4 +1,4 @@
-function [TotalVariation,TotalVariationAdj,Fractions,FractionsAdj,Prob]=varpart(predictand,predictors,NumberPermutations,ShowResultTable);
+function [Rsq,RsqAdj,Fractions,FractionsAdj,Prob]=varpart_long(predictand,predictors,NumberPermutations,ShowResultTable);
 % VariationPartitionRDA: performs a variation partitioning on a distance
 % (or similarity) matrix based on two or more data matrices.
 % ¿¿based on redundancy analysis (RDA). ??
@@ -24,8 +24,8 @@ function [TotalVariation,TotalVariationAdj,Fractions,FractionsAdj,Prob]=varpart(
 %   ShowResultTable = if set to 1, a formatted Table with all the results
 %                     will be displayed
 % output:
-%   TotalVariation = fractions [abc], [ab] and [bc]
-%   TotalVariationAdj = adjusted fractions [abc], [ab] and [bc]
+%   Rsq = fractions [abc], [ab] and [bc]
+%   RsqAdj = adjusted fractions [abc], [ab] and [bc]
 %   Fractions = fractions [a], [b], [c] and [d]
 %   FractionsAdj = adjusted fractions [a], [b], [c] and [d]
 %   [abc] = variation explained due to X1 and X2
@@ -90,16 +90,8 @@ for c_pred = 1:n_preds
 end
 
 % Compute regression
-SlopesObs = (pred_mat'*pred_mat) \ pred_mat'*YVector;
-pred = pred_mat * SlopesObs;
-RegressionSS=trace(pred'*pred);
-abc=RegressionSS/TotalSS;
-residualMS=sum((YVector-pred)'*(YVector-pred))/(NumberRows-2-1);
-regressionMS=RegressionSS/NumberRows;
-FabcObs=regressionMS/residualMS;
-SlopesObs=abs(SlopesObs);
-TotalVariation.full=abc;
-TotalVariationAdj.full=1-residualMS/TotalMS;
+temp = run_regresion(pred_mat,YVector);
+Rsq.full = temp.adjusted;
 
 %% Rest of the models (Full model - 1 predictor)
 % (a.k.a., "ab" and "bc" for two predictors, "abc", "abd" and "bcd" for
@@ -115,17 +107,8 @@ for c_pred = 1:n_preds
     pred_mat = temp;
     
     % Compute regression
-    slopes = (pred_mat'*pred_mat) \ pred_mat'*YVector;
-    pred = pred_mat * slopes;
-    RegressionSS=trace(pred'*pred);
-    fract=RegressionSS/TotalSS;
-    residualMS=sum((YVector-pred)'*(YVector-pred))/(NumberRows-2-1);
-    regressionMS=RegressionSS/NumberRows;
-    F_frac_Obs(c_pred)=regressionMS/residualMS;
-    
-    % Store computations
-    TotalVariation.fraction(c_pred) = fract;
-    TotalVariationAdj.fraction(c_pred) = residualMS / TotalMS;
+    temp = run_regresion(pred_mat,YVector);
+    Rsq.fraction(c_pred) = temp.adjusted;
     
 end
 
@@ -136,27 +119,23 @@ end
 % model to obtain the contribution of X.
 c = n_preds+1;
 for c_pred = 1:n_preds
-    Fractions(c_pred) = TotalVariation.full - TotalVariation.fraction(c_pred);
-    FractionsAdj(c_pred) = TotalVariationAdj.full - TotalVariationAdj.fraction(c_pred);
+    Fractions(c_pred) = Rsq.full - Rsq.fraction(c_pred);
 end
 
 %% Compute shared variation
 % -----------------------------
 
 % We can also easily compute the shared variance.
-shared = TotalVariation.full;
-sharedAdj = TotalVariationAdj.full;
+shared = Rsq.full;
 for c_pred = 1:n_preds
     shared = shared - Fractions(c_pred);
-    sharedAdj = sharedAdj - FractionsAdj(c_pred);
 end
 
 %% Compute residuals
 % -----------------------------
 
 % And the residuals (unexplained variance)
-residuals = 1 - TotalVariation.full;
-residualesAdj = 1 - TotalVariationAdj.full;
+residuals = 1 - Rsq.full;
 
 %% Permutation test
 'Running permutation test'
@@ -244,9 +223,9 @@ if ShowResultTable == 1
     if NumberPermutations > 0
         fprintf('Total Contribution:\n');
         fprintf('  Matrix    Percentg. Explanation  Percentg. Exp - Adjusted   Probability \n');
-        fprintf('  X1X2     % -8.6f              % -8.6f                   %8.6f \n',TotalVariation.X12,TotalVariationAdj.X12,Prob.abc);
-        fprintf('  X1       % -8.6f              % -8.6f                   %8.6f \n',TotalVariation.X1,TotalVariationAdj.X1,Prob.ab);
-        fprintf('  X2       % -8.6f              % -8.6f                   %8.6f \n',TotalVariation.X2,TotalVariationAdj.X2,Prob.bc);
+        fprintf('  X1X2     % -8.6f              % -8.6f                   %8.6f \n',Rsq.X12,RsqAdj.X12,Prob.abc);
+        fprintf('  X1       % -8.6f              % -8.6f                   %8.6f \n',Rsq.X1,RsqAdj.X1,Prob.ab);
+        fprintf('  X2       % -8.6f              % -8.6f                   %8.6f \n',Rsq.X2,RsqAdj.X2,Prob.bc);
         fprintf('\n');
         fprintf('Partitioning:\n');
         fprintf('  Fraction  Percentg. Explanation  Percentg. Exp - Adjusted   Probability \n');
@@ -257,9 +236,9 @@ if ShowResultTable == 1
     else
         fprintf('Total Contribution:\n');
         fprintf('  Matrix    Percentg. Explanation  Percentg. Exp - Adjusted   \n');
-        fprintf('  X1X2     % -8.6f              % -8.6f                   \n',TotalVariation.X12,TotalVariationAdj.X12);
-        fprintf('  X1       % -8.6f              % -8.6f                   \n',TotalVariation.X1,TotalVariationAdj.X1);
-        fprintf('  X2       % -8.6f              % -8.6f                   \n',TotalVariation.X2,TotalVariationAdj.X2);
+        fprintf('  X1X2     % -8.6f              % -8.6f                   \n',Rsq.X12,RsqAdj.X12);
+        fprintf('  X1       % -8.6f              % -8.6f                   \n',Rsq.X1,RsqAdj.X1);
+        fprintf('  X2       % -8.6f              % -8.6f                   \n',Rsq.X2,RsqAdj.X2);
         fprintf(' \n');
         fprintf('Partitioning:\n');
         fprintf('  Fraction  Percentg. Explanation  Percentg. Exp - Adjusted   \n');
@@ -269,3 +248,20 @@ if ShowResultTable == 1
         fprintf('  residual % -8.6f              % -8.6f                   \n',Fractions.d,FractionsAdj.d);
     end;
 end;
+end
+
+function Rsq = run_regresion(X,Y)
+
+% Obtain betas
+b = (X'*X) \ X'*Y;
+
+% Get the fitted values
+pred = X * b;
+
+% Compute Rsqrd
+Rsq.ordinary  = 1 - sum((Y - pred).^2) / sum((Y-mean(Y)).^2);
+
+% Adjusted Rsqrd
+n = size(Y,1);d = size(X,2);
+Rsq.adjusted = 1 - (1-Rsq.ordinary) * (n - 1) /(n -d -1);
+end
