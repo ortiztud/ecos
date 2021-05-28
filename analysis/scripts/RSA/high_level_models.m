@@ -1,8 +1,8 @@
 %% Create model RDMs from natural and animacy categories
 
 % Set where the images are and where we want the output.
-table_path = '..\..\..\';
-out_path = '..\..\outputs\';
+table_path = '../../../';
+out_path = '../../outputs/';
 
 % List files in the directory
 db_info=readtable([table_path, 'ecos_summary_table.xlsx'], 'Sheet', 'Object');

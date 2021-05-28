@@ -48,9 +48,7 @@ function [TotalVariation,TotalVariationAdj,Fractions,FractionsAdj,Prob]=varpart(
 
 % For easier handling
 Y = predictand;
-X1 = predictors{1};
-X2 = predictors{2};
-n = size(X1,1);
+n = size(predictand,1);
 
 % First we need to know how many predictors were entered in the analysis.
 n_preds = size(predictors,2);

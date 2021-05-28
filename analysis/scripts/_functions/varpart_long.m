@@ -91,6 +91,8 @@ end
 
 % Compute regression
 temp = run_regresion(pred_mat,YVector);
+mdl = fitlm(pred_mat,YVector);
+
 Rsq.full = temp.adjusted;
 
 %% Rest of the models (Full model - 1 predictor)
@@ -147,7 +149,7 @@ Prob.abc=[]; Prob.ab=[]; Prob.bc=[]; Prob.a=[]; Prob.c=[];
 if NumberPermutations > 0
     Probabc=1; Probab=1; Probbc=1; Proba=1; Probc=1;
     for i=1:NumberPermutations
-        %$ =============== Permute predictand matrix
+        % =============== Permute predictand matrix
         PermutedColumns=randperm(NumberColumns);
         YPermuted=predictand(PermutedColumns,:);
         YPermuted=YPermuted(:,PermutedColumns);
